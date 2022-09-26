@@ -4,8 +4,12 @@ namespace TimetablePlus;
 
 public sealed class Options
 {
+    [Value(0, 
+        HelpText = "The class to parse the timetable of (case sensitive)")]
+    public string ClassID { get; set; }
     [Option('l', "use local",
-        HelpText = "Uses the local version of the timetable instead of downloading it from the internet")]
+        HelpText = "Uses the local version of the timetable " +
+                   "instead of downloading it from the internet")]
     public bool UseLocal { get; set; } = false;
 
     [Option('d', "save", 

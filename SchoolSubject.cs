@@ -22,24 +22,19 @@ public enum SchoolSubject
 
 public static class SchoolSubjectImplementations
 {
-    public static Argb32 GetColor(this SchoolSubject subject)
+    public static Argb32 GetColor(this SchoolSubject subject, Config config)
     {
-        return subject switch
+        if (config.ColorMapping.TryGetValue(subject, out string? hexCol)
+            && hexCol is not null)
         {
-            SchoolSubject.English => Color.Yellow,
-            SchoolSubject.Math => Color.Orange,
-            SchoolSubject.Physics => Color.Cyan,
-            SchoolSubject.Biology => Color.DarkBlue,
-            SchoolSubject.Chemistry => Color.DarkGreen,
-            SchoolSubject.PhysicalEducation => Color.Grey,
-            SchoolSubject.Arabic => Color.SaddleBrown,
-            SchoolSubject.Islamic => Color.MediumPurple,
-            SchoolSubject.MoralEducation => Color.LightGreen,
-            SchoolSubject.Computer => Color.Purple,
-            SchoolSubject.Business => Color.Coral,
-            SchoolSubject.Elective => Color.WhiteSmoke,
-            _ => Color.Black
-        };
+            hexCol = hexCol.Length > 0 && hexCol[0] == '#' ? hexCol[1..] : hexCol;
+        }
+        else
+        {
+            hexCol = Config.Default.ColorMapping[SchoolSubject.Unknown]!;
+        }
+
+        return Color.ParseHex(hexCol);
     }
 
     public static string GetNickname(this SchoolSubject subject)
@@ -58,7 +53,7 @@ public static class SchoolSubjectImplementations
             SchoolSubject.Computer => "Comp",
             SchoolSubject.Business => "Busin",
             SchoolSubject.Elective => "Elect",
-            _ => "N/A"
+            _ => "???"
         };
     }
 }

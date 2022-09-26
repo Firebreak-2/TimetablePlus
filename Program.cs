@@ -23,12 +23,12 @@ namespace TimetablePlus;
 
 public static class Program
 {
-    public const string CONFIG_FILE_NAME = "config.json";
+    public const string CONFIG_FILE_NAME = "tt_config.json";
     public static readonly Config Configuration;
 
     static Program()
     {
-        TryFetchConfig(CONFIG_FILE_NAME, out Configuration);
+        TryFetchConfig($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}/{CONFIG_FILE_NAME}", out Configuration);
     }
 
     public static async Task Main(string[] args)
@@ -44,7 +44,7 @@ public static class Program
         Font font = family.CreateFont(50, FontStyle.Bold);
         Font fontSmall = family.CreateFont(30, FontStyle.Bold);
 
-        Image<Argb32> theBigPicture = await GetTimetable(options.UseLocal, options.SaveTimetable);
+        Image<Argb32> theBigPicture = await GetTimetable(options);
 
         Image<Argb32>[][] rows = new Image<Argb32>[4][];
         const int width = 240;
@@ -158,8 +158,7 @@ public static class Program
         int xL = subjectEnums[0].Length;
         int yL = subjectEnums.Length;
 
-        int genWidth =
-            genW * xL + Configuration.BreakMapping.Count * genW + genW;
+        int genWidth = genW * xL + Configuration.BreakMapping.Count * genW + 4 * genW;
         int genHeight = genH * yL + genH;
 
         var bgCol = options.WhiteMode ? Color.White : Color.Black;
@@ -175,7 +174,7 @@ public static class Program
                 if (x == 0)
                     return fgCol;
 
-                var col = subjectEnums[y][x - 1].GetColor();
+                var col = subjectEnums[y][x - 1].GetColor(Configuration);
                 if (options.WhiteMode)
                 {
                     // invert color
@@ -229,38 +228,42 @@ public static class Program
             }, version, fgCol);
         });
 
-        string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/BetterTimetable.png";
+        string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + $"/{options.ClassID}++.png";
         await genImage.SaveAsPngAsync(path);
     }
 
     public static bool TryFetchConfig(string path, out Config configuration)
     {
         configuration = Config.Default;
-        if (!File.Exists(path))
-            return false;
 
         try
         {
+            if (!File.Exists(path))
+                throw new Exception("Configuration file doesn't exist");
+            
             string text = File.ReadAllText(path);
             Config? config = JsonSerializer.Deserialize<Config>(text);
 
-            if (config is null)
-                return false;
-
-            configuration = config;
+            configuration = config 
+                            ?? throw new Exception("Configuration cannot be null");
+            
             return true;
         }
         catch
         {
+            File.WriteAllText(path, JsonSerializer.Serialize(configuration, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            }));
             return false;
         }
     }
 
-    public static async ValueTask<Image<Argb32>> GetTimetable(bool useLocal, bool save = true)
+    public static async ValueTask<Image<Argb32>> GetTimetable(Options options)
     {
-        string imgPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/12B.jpg";
+        string imgPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + $"/{options.ClassID}.jpg";
 
-        if (useLocal)
+        if (options.UseLocal)
             return Image.Load<Argb32>(imgPath);
 
         const string url = @"https://tapschool.ae/timetable/";
@@ -268,13 +271,13 @@ public static class Program
 
         string response = await client.GetStringAsync(url);
 
-        Regex regex = new(@"<h(\d).*>.*12B.*<\/h\1>\s*<p><a href=""(.+?)"".*>Download Timetable<\/a><\/p> ");
+        Regex regex = new($@"<h(\d).*>.*{options.ClassID}.*<\/h\1>\s*<p><a href=""(.+?)"".*>Download Timetable<\/a><\/p> ");
         string link = regex.Match(response).Groups[2].Value;
 
         byte[] bytes = await client.GetByteArrayAsync(link);
         var img = Image.Load<Argb32>(bytes);
 
-        if (save)
+        if (options.SaveTimetable)
             await img.SaveAsJpegAsync(imgPath);
 
         return img;
