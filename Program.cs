@@ -215,14 +215,43 @@ public static class Program
                     fgCol);
             });
 
+        var teachers = CurrentConfig.ClassBindings[options.ClassID].Teachers;
+        genImage.DrawSquares(1, teachers.Count,
+            (_, y) => teachers.Keys.ElementAt(y).GetColor(CurrentConfig),
+            (_, _) => genW / 4 * 3,
+            (_, _) => genH / 3,
+            (_, _) => new Point(genWidth - 2 * genW - genW / 2, genH / 2),
+            (_, _) => borderLength,
+            (_, y) => (teachers.Keys.ElementAt(y).GetNickname(), fontSmall, fgCol));
+        for (int i = 0; i < teachers.Count; i++)
+        {
+            genImage.Mutate(proc => proc.DrawText(new TextOptions(fontSmall)
+            {
+                Origin = new Point(genWidth - 2 * genW - genW / 2 + genW / 4 * 3 + genW / 8, genH / 2 + i * (genH / 3) + genH / 6),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center
+            }, teachers.Values.ElementAt(i), fgCol));
+        }
+
+        float smallFontPadding = fontSmall.Size / 2 + 2;
+
         genImage.Mutate(i =>
         {
             i.DrawText(new TextOptions(fontSmall)
             {
-                Origin = new PointF(genW * .5f, genH * .5f),
+                Origin = new PointF(genW * .5f, genH * .5f + smallFontPadding),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
             }, version, fgCol);
+        });
+        genImage.Mutate(i =>
+        {
+            i.DrawText(new TextOptions(fontSmall)
+            {
+                Origin = new PointF(genW * .5f, genH * .5f - smallFontPadding),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            }, options.ClassID, fgCol);
         });
 
         string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + $"/{options.ClassID}++.png";
