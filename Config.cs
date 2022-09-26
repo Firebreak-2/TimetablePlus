@@ -16,6 +16,8 @@ public record Config
     public Dictionary<string, SchoolSubject> RegexSubjectMappings { get; set; }
     public Dictionary<string, Class> ClassBindings { get; set; }
     public Dictionary<SchoolSubject, string?> ColorMapping { get; set; }
+    public string ForegroundColor { get; set; }
+    public string BackgroundColor { get; set; }
 
     public static Config Default => new()
     {
@@ -90,7 +92,9 @@ public record Config
             { SchoolSubject.Computer, Color.Purple.ToHex()[..^2] },
             { SchoolSubject.Business, Color.Coral.ToHex()[..^2] },
             { SchoolSubject.Elective, Color.WhiteSmoke.ToHex()[..^2] },
-            { SchoolSubject.Unknown, Color.Black.ToHex()[..^2] },
-        }
+            { SchoolSubject.Unknown, Color.White.ToHex()[..^2] },
+        },
+        BackgroundColor = "000000",
+        ForegroundColor = "FFFFFF",
     };
 }

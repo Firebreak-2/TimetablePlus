@@ -24,11 +24,11 @@ namespace TimetablePlus;
 public static class Program
 {
     public const string CONFIG_FILE_NAME = "tt_config.json";
-    public static readonly Config Configuration;
+    public static readonly Config CurrentConfig;
 
     static Program()
     {
-        TryFetchConfig($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}/{CONFIG_FILE_NAME}", out Configuration);
+        TryFetchConfig($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}/{CONFIG_FILE_NAME}", out CurrentConfig);
     }
 
     public static async Task Main(string[] args)
@@ -83,17 +83,17 @@ public static class Program
             }
         }
 
-        Duration[] classDurations = new Duration[subjectEnums[0].Length + Configuration.BreakMapping.Count];
+        Duration[] classDurations = new Duration[subjectEnums[0].Length + CurrentConfig.BreakMapping.Count];
         {
             int tSum = 0;
             int mappingOffset = 0;
             for (int i = 0; i < classDurations.Length; i++)
             {
-                if (!Configuration.TimeModMapping.TryGetValue(i - mappingOffset, out int pl))
-                    pl = Configuration.DefaultPeriodLength;
-                var sTime = Configuration.StartTime + TimeSpan.FromMinutes(tSum);
-                var eTime = Configuration.StartTime + TimeSpan.FromMinutes(tSum + pl);
-                foreach ((int index, int value) in Configuration.BreakMapping)
+                if (!CurrentConfig.TimeModMapping.TryGetValue(i - mappingOffset, out int pl))
+                    pl = CurrentConfig.DefaultPeriodLength;
+                var sTime = CurrentConfig.StartTime + TimeSpan.FromMinutes(tSum);
+                var eTime = CurrentConfig.StartTime + TimeSpan.FromMinutes(tSum + pl);
+                foreach ((int index, int value) in CurrentConfig.BreakMapping)
                 {
                     if (i <= index)
                         continue;
@@ -105,7 +105,7 @@ public static class Program
                 classDurations[i] = new Duration(sTime, eTime);
                 tSum += pl;
 
-                if (!Configuration.BreakMapping.TryGetValue(i - mappingOffset, out int breakLength))
+                if (!CurrentConfig.BreakMapping.TryGetValue(i - mappingOffset, out int breakLength))
                     continue;
 
                 mappingOffset++;
@@ -128,7 +128,7 @@ public static class Program
 
                 string text = Regex.Replace(result.Text, @"\n.*", "");
                 subjectNames[y][x] = text;
-                foreach ((string matcher, SchoolSubject value) in Configuration.RegexSubjectMappings)
+                foreach ((string matcher, SchoolSubject value) in CurrentConfig.RegexSubjectMappings)
                 {
                     if (text.StartsWith(matcher, true, null))
                         subjectEnums[y][x] = value;
@@ -158,11 +158,11 @@ public static class Program
         int xL = subjectEnums[0].Length;
         int yL = subjectEnums.Length;
 
-        int genWidth = genW * xL + Configuration.BreakMapping.Count * genW + 4 * genW;
+        int genWidth = genW * xL + CurrentConfig.BreakMapping.Count * genW + 4 * genW;
         int genHeight = genH * yL + genH;
 
-        var bgCol = options.WhiteMode ? Color.White : Color.Black;
-        var fgCol = options.WhiteMode ? Color.Black : Color.White;
+        var bgCol = Color.ParseHex(CurrentConfig.BackgroundColor);
+        var fgCol = Color.ParseHex(CurrentConfig.ForegroundColor);
 
         var genImage = new Image<Argb32>(genWidth, genHeight, bgCol);
         const int borderLength = 12;
@@ -174,19 +174,16 @@ public static class Program
                 if (x == 0)
                     return fgCol;
 
-                var col = subjectEnums[y][x - 1].GetColor(Configuration);
-                if (options.WhiteMode)
-                {
-                    // invert color
-                    col = new Argb32((byte) (255 - col.R), (byte) (255 - col.G), (byte) (255 - col.B), col.A);
-                }
+                var col = options.Monochrome 
+                    ? fgCol.ToPixel<Argb32>() 
+                    : subjectEnums[y][x - 1].GetColor(CurrentConfig);
 
                 return col;
             },
             (_, _) => genW,
             (_, _) => genH,
             (x, _) => new Point((
-                from KeyValuePair<int, int> i in Configuration.BreakMapping
+                from KeyValuePair<int, int> i in CurrentConfig.BreakMapping
                 where x - 1 > i.Key
                 select genW
             ).Sum(), genH),
@@ -194,7 +191,7 @@ public static class Program
             (x, y) =>
             {
                 if (x == 0)
-                    return (Configuration.WeekdayNames[y].Substring(0, 3), font, fgCol);
+                    return (CurrentConfig.WeekdayNames[y].Substring(0, 3), font, fgCol);
 
                 var name = subjectEnums[y][x - 1].GetNickname();
 

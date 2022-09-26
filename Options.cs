@@ -16,7 +16,7 @@ public sealed class Options
         HelpText = "Save the timetable used by the OCR to the desktop")]
     public bool SaveTimetable { get; set; } = false;
 
-    [Option('w', "white mode", 
-        HelpText = "Generates a bright/light version of the timetable")]
-    public bool WhiteMode { get; set; } = false;
+    [Option('m', "monochrome",
+        HelpText = "Ignores all subject colorings and instead uses the default foreground color")]
+    public bool Monochrome { get; set; } = false;
 }
