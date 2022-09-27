@@ -158,8 +158,12 @@ public static class Program
         int xL = subjectEnums[0].Length;
         int yL = subjectEnums.Length;
 
-        int genWidth = genW * xL + CurrentConfig.BreakMapping.Count * genW + 4 * genW;
+        int genWidth = genW * xL + CurrentConfig.BreakMapping.Count * genW + genW;
         int genHeight = genH * yL + genH;
+
+        if (CurrentConfig.ClassBindings.TryGetValue(options.ClassID, out var selectedClass))
+            genWidth += 3 * genW;
+        else selectedClass = new Config.Class(new Dictionary<SchoolSubject, string>());
 
         var bgCol = Color.ParseHex(CurrentConfig.BackgroundColor);
         var fgCol = Color.ParseHex(CurrentConfig.ForegroundColor);
@@ -215,7 +219,7 @@ public static class Program
                     fgCol);
             });
 
-        var teachers = CurrentConfig.ClassBindings[options.ClassID].Teachers;
+        var teachers = selectedClass.Teachers;
         genImage.DrawSquares(1, teachers.Count,
             (_, y) => teachers.Keys.ElementAt(y).GetColor(CurrentConfig),
             (_, _) => genW / 4 * 3,
