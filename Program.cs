@@ -178,9 +178,7 @@ public static class Program
                 if (x == 0)
                     return fgCol;
 
-                var col = options.Monochrome 
-                    ? fgCol.ToPixel<Argb32>() 
-                    : subjectEnums[y][x - 1].GetColor(CurrentConfig);
+                var col = subjectEnums[y][x - 1].GetColor(CurrentConfig, options);
 
                 return col;
             },
@@ -221,7 +219,7 @@ public static class Program
 
         var teachers = selectedClass.Teachers;
         genImage.DrawSquares(1, teachers.Count,
-            (_, y) => teachers.Keys.ElementAt(y).GetColor(CurrentConfig),
+            (_, y) => teachers.Keys.ElementAt(y).GetColor(CurrentConfig, options),
             (_, _) => genW / 4 * 3,
             (_, _) => genH / 3,
             (_, _) => new Point(genWidth - 2 * genW - genW / 2, genH / 2),

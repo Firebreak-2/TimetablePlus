@@ -22,8 +22,11 @@ public enum SchoolSubject
 
 public static class SchoolSubjectImplementations
 {
-    public static Argb32 GetColor(this SchoolSubject subject, Config config)
+    public static Argb32 GetColor(this SchoolSubject subject, Config config, Options options)
     {
+        if (options.Monochrome)
+            return Color.ParseHex(config.ForegroundColor).ToPixel<Argb32>();
+        
         if (config.ColorMapping.TryGetValue(subject, out string? hexCol)
             && hexCol is not null)
         {
